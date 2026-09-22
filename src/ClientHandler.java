@@ -4,7 +4,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-/** Atende um unico cliente em sua propria thread. */
+/** Atende um unico cliente em sua propria thread, seguindo o Protocol. */
 public class ClientHandler implements Runnable {
 
     private final Socket clientSocket;
@@ -20,9 +20,15 @@ public class ClientHandler implements Runnable {
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
-            String s;
-            while ((s = in.readLine()) != null) {
-                out.println(s);
+            out.println(Protocol.GREETING);
+
+            String line;
+            while ((line = in.readLine()) != null) {
+                Protocol.Reply reply = Protocol.handle(line);
+                out.println(reply.text());
+                if (reply.closeConnection()) {
+                    break;
+                }
             }
         } catch (IOException e) {
             System.err.println("Erro com " + who + ": " + e.getMessage());
